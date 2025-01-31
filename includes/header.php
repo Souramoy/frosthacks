@@ -1,6 +1,10 @@
 <?php 
   include("conn.php");
   include("query/selectData.php");
+  $id = $_GET['id'];
+
+  $selExmne = $conn->query("SELECT * FROM examinee_tbl WHERE exmne_id='$id' ")->fetch(PDO::FETCH_ASSOC);
+  
  ?>
 
 <!doctype html>
@@ -23,7 +27,7 @@
     <div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
         <div class="app-header header-shadow">
             <div class="app-header__logo">
-                <a href="home.php"><h5 style="color:black;">STURTLE SECURITY</h5><h6 style="color:black;">Examinaton Portal</h6></a>
+                <a href="home.php"><h5 style="color:black;">CRACK CODER</h5><h6 style="color:black;">Examinaton Portal</h6></a>
                 <div class="header__pane ml-auto">
                     <div>
                         <button type="button" class="hamburger close-sidebar-btn hamburger--elastic" data-class="closed-sidebar">
@@ -69,7 +73,8 @@
                                             <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                         </a>
                                         <div tabindex="-1" role="menu" aria-hidden="true" class="dropdown-menu dropdown-menu-right">
-                                            <button type="button" tabindex="0" class="dropdown-item">My Account</button>
+                                            <a rel="facebox" href="adminpanel/admin/facebox_modal/updateExaminee.php?id=<?php echo $selExmneeData['exmne_id']; ?>" class="dropdown-item">Update</a>
+
                                             <div tabindex="-1" class="dropdown-divider"></div>
                                             <a href="query/logoutExe.php" class="dropdown-item">LOG OUT</a>
                                         </div>
