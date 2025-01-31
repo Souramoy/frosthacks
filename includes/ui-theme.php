@@ -5,9 +5,9 @@
             <div class="theme-settings__inner">
                 <div class="scrollbar-container">
                     <div class="theme-settings__options-wrapper">
-                        <h3 class="themeoptions-heading">Layout Options
-                        </h3>
-                        <div class="p-3">
+                        <!-- <h3 class="themeoptions-heading">Layout Options
+                        </h3> -->
+                        <!-- <div class="p-3">
                             <ul class="list-group">
                                 <li class="list-group-item">
                                     <div class="widget-content p-0">
@@ -67,7 +67,7 @@
                                     </div>
                                 </li>
                             </ul>
-                        </div>
+                        </div> -->
                         <h3 class="themeoptions-heading">
                             <div>
                                 Header Options
@@ -250,12 +250,12 @@
                                 </li>
                             </ul>
                         </div>
-                        <h3 class="themeoptions-heading">
+                        <!-- <h3 class="themeoptions-heading">
                             <div>Main Content Options</div>
                             <button type="button" class="btn-pill btn-shadow btn-wide ml-auto active btn btn-focus btn-sm">Restore Default
                             </button>
-                        </h3>
-                        <div class="p-3">
+                        </h3> -->
+                        <!-- <div class="p-3">
                             <ul class="list-group">
                                 <li class="list-group-item">
                                     <h5 class="pb-2">Page Section Tabs
@@ -272,7 +272,7 @@
                                     </div>
                                 </li>
                             </ul>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
