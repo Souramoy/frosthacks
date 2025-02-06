@@ -23,7 +23,7 @@
     <div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
         <div class="app-header header-shadow">
             <div class="app-header__logo">
-                <a href="home.php"><h5 style="color:black;">STURTLE SECURITY</h5><h6 style="color:black;">Examinaton Portal</h6></a>
+                <a href="home.php"><h5 style="color:black;">CRACK CODER</h5><h6 style="color:black;">Examinaton Portal</h6></a>
                 <div class="header__pane ml-auto">
                     <div>
                         <button type="button" class="hamburger close-sidebar-btn hamburger--elastic" data-class="closed-sidebar">

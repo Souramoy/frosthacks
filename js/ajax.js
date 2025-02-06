@@ -62,8 +62,11 @@ if (result.value) {
         }).then((result) => {
         if (result.value) {
           $('#submitAnswerFrm')[0].reset();
-           var exam_id = $('#exam_id').val();
-           window.location.href='home.php?page=result&id=' + exam_id;
+            // Delay the redirection by 2 seconds to save recordings
+            setTimeout(() => {
+              var exam_id = $('#exam_id').val();
+              window.location.href = 'home.php?page=result&id=' + exam_id;
+          }, 5000); // 2000 milliseconds = 2 seconds
         }
 
         });
