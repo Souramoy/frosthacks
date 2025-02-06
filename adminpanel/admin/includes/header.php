@@ -11,7 +11,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Language" content="en">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <link rel="icon" type="login-ui/image/png" href="login-ui/images/icons/loginlogo.ico"/>
+    <link rel="icon" type="login-ui/image" href="login-ui/images/icons/loginlogo.ico"/>
 
     <title> Admin Panel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
@@ -25,7 +25,7 @@
     <div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
         <div class="app-header header-shadow">
             <div class="app-header__logo">
-            <a href="home.php"><h4 style="color:black;">Sturtle Security</h4></a>
+            <a href="home.php"><h4 style="color:black;">Crack Coder</h4></a>
 
                 <div class="header__pane ml-auto">
                     <div>
