@@ -194,31 +194,31 @@
         });
     }
 
-    // Intercept reload, close, or navigate away
-window.onbeforeunload = function (e) {
-    var message = "You have an active exam session. Are you sure you want to leave?";
-    e = e || window.event;
+//     // Intercept reload, close, or navigate away
+// window.onbeforeunload = function (e) {
+//     var message = "You have an active exam session. Are you sure you want to leave?";
+//     e = e || window.event;
 
-    if (e) {
-        e.returnValue = message;
-    }
+//     if (e) {
+//         e.returnValue = message;
+//     }
 
-    return message;
-};
+//     return message;
+// };
 
-// Disable F5 and Ctrl+R reload
-document.addEventListener('keydown', function (event) {
-    if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
-        event.preventDefault();
-        alert("Reload is disabled during the exam!");
-    }
-});
+// // Disable F5 and Ctrl+R reload
+// document.addEventListener('keydown', function (event) {
+//     if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+//         event.preventDefault();
+//         alert("Reload is disabled during the exam!");
+//     }
+// });
 
-// Disable back button functionality
-history.pushState(null, null, window.location.href);
-window.onpopstate = function () {
-    history.pushState(null, null, window.location.href);
-};
+// // Disable back button functionality
+// history.pushState(null, null, window.location.href);
+// window.onpopstate = function () {
+//     history.pushState(null, null, window.location.href);
+// };
 
 
 
