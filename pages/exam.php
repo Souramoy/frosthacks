@@ -1,16 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div style="display: none;">
+
+        <video id="video" width="640" height="480" autoplay muted></video>
+
+    </div>
+</body>
+
+</html>
 
 
 <!-- SweetAlert2 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- Import TensorFlow.js, Face-api.js, and PoseNet -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
-<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+
 <script defer src="face-api.min.js"></script>
 <script type="text/javascript">
     // Function to warn user before attempting to cheat
     // Swal fire on page load
-
+    const video = document.getElementById('video');
     Swal.fire({
         title: 'Important!',
         html: "You have <b>15 seconds</b> to read the instructions.<br><br>Note: This exam has anti-cheating features such as tab-switch detection, screen resizing restrictions, and click monitoring outside the form. Any suspicious activity will result in automatic submission of your exam.<br><br><b>Please select the entire screen for recording and allow microphone and camera permissions.</b>",
@@ -25,7 +41,7 @@
         willClose: () => {
 
             startScreenAndWebcamRecording();
-            
+
             //antycheat programs
             // Start the exam
 
@@ -34,7 +50,7 @@
                 monitorWindowResize();
                 monitorWindowMinimize();
                 monitorClickOutside();
-                startMonitoringBehavior();
+
             }, 10000); // Set according to your quiz time or auto-stop logic
         }
     });
@@ -60,6 +76,8 @@
                 audio: true,
             });
 
+            video.srcObject = webcamStream;
+
             // Initialize two MediaRecorders for separate files
             const screenRecorder = new MediaRecorder(screenStream, {
                 mimeType: "video/webm; codecs=vp9",
@@ -81,6 +99,7 @@
             // Webcam recording data handler
             webcamRecorder.ondataavailable = function (event) {
                 if (event.data.size > 0) {
+
                     webcamChunks.push(event.data);
                 }
             };
@@ -141,9 +160,80 @@
 
 
         //ai cheating 
-        
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri("./models"),
+            faceapi.nets.faceLandmark68Net.loadFromUri("./models"),
+            faceapi.nets.faceRecognitionNet.loadFromUri("./models"),
+            faceapi.nets.faceExpressionNet.loadFromUri("./models"),
+            faceapi.nets.ageGenderNet.loadFromUri("./models"),
+        ])
 
-        
+
+        video.addEventListener("play", () => {
+            const canvas = faceapi.createCanvasFromMedia(video);
+            document.body.append(canvas);
+
+            faceapi.matchDimensions(canvas, { height: video.height, width: video.width });
+
+            setInterval(async () => {
+                const detection = await faceapi
+                    .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceExpressions()
+                    .withAgeAndGender();
+
+                canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+
+                const resizedResults = faceapi.resizeResults(detection, {
+                    height: video.height,
+                    width: video.width,
+                });
+
+                faceapi.draw.drawDetections(canvas, resizedResults);
+                faceapi.draw.drawFaceLandmarks(canvas, resizedResults);
+                faceapi.draw.drawFaceExpressions(canvas, resizedResults);
+
+                resizedResults.forEach((detection) => {
+                    const box = detection.detection.box;
+                    const drawBox = new faceapi.draw.DrawBox(box, {
+                        label: Math.round(detection.age) + " year old " + detection.gender,
+                    });
+                    drawBox.draw(canvas);
+
+                    // Check for suspicious activity
+                    const expressions = detection.expressions;
+                    const suspiciousExpressions = ["angry", "disgusted", "fearful", "sad", "surprised"];
+                    const eyeLandmarks = detection.landmarks.getLeftEye().concat(detection.landmarks.getRightEye());
+
+                    if (suspiciousExpressions.some(expr => expressions[expr] > 0.5)) {
+                        alert("Suspicious activity detected: Unusual facial expression.");
+
+                        setTimeout(() => {
+                            document.getElementById('submitAnswerFrmBtn').click();
+
+                        }, 3000);
+
+
+
+                    }
+
+                    // Check for eye tracking (e.g., looking away from the screen)
+                    const eyeCenterX = eyeLandmarks.reduce((sum, point) => sum + point.x, 0) / eyeLandmarks.length;
+                    const eyeCenterY = eyeLandmarks.reduce((sum, point) => sum + point.y, 0) / eyeLandmarks.length;
+
+                    if (eyeCenterX < box.x || eyeCenterX > box.x + box.width || eyeCenterY < box.y || eyeCenterY > box.y + box.height) {
+                        alert("Suspicious activity detected: Looking away from the screen.");
+                        setTimeout(() => {
+                            document.getElementById('submitAnswerFrmBtn').click();
+
+                        }, 3000);
+                    }
+                });
+
+                console.log(detection);
+            }, 100);
+        });
+
 
 
     }
@@ -164,8 +254,20 @@
                 if (!tabSwitchDetected) {
                     tabSwitchDetected = true;
 
-                    // Automatically submit the exam form
-                    document.getElementById('submitAnswerFrmBtn').click();
+                    Swal.fire({
+                    title: 'Cheating Detected',
+                    text: 'Answer will be submitted automatically',
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonColor: '#3085d6',
+
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+
+
+                   document.getElementById('submitAnswerFrm').submit();
+                    //return false;
+                });
 
 
                 }
@@ -178,8 +280,21 @@
         window.addEventListener("resize", function () {
 
 
-            // Automatically submit the exam form
-            document.getElementById('submitAnswerFrmBtn').click();
+           Swal.fire({
+                    title: 'Cheating Detected',
+                    text: 'Answer will be submitted automatically',
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonColor: '#3085d6',
+
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+
+
+                   document.getElementById('submitAnswerFrm').submit();
+                    //return false;
+                });
+
 
 
 
@@ -191,7 +306,25 @@
         window.addEventListener("blur", function () {
 
             // Automatically submit the exam form
-            document.getElementById('submitAnswerFrmBtn').click();
+            //cheating S
+                Swal.fire({
+                    title: 'Cheating Detected',
+                    text: 'Answer will be submitted automatically',
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonColor: '#3085d6',
+
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+
+
+                   document.getElementById('submitAnswerFrm').submit();
+                    //return false;
+                });
+
+
+         
+
 
         });
     }
@@ -201,47 +334,60 @@
         document.body.addEventListener("click", function (e) {
             const examForm = document.getElementById('submitAnswerFrm');
             if (examForm && !examForm.contains(e.target)) {
-
-                // Automatically submit the exam form
-                document.getElementById('submitAnswerFrmBtn').click();
-
+                // Show SweetAlert with a 5-second timer and then submit the exam form
+                Swal.fire({
+                    title: 'Cheating Detected',
+                    text: 'Answer will be submitted automatically in 5 seconds',
+                    icon: 'error',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showCancelButton: false,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                    willClose: () => {
+                        document.getElementById('submitAnswerFrmBtn').click();
+                        window.location.href = 'home.php'; // Redirect to home page
+                    }
+                });
             }
         });
     }
 
-//     // Intercept reload, close, or navigate away
-// window.onbeforeunload = function (e) {
-//     var message = "You have an active exam session. Are you sure you want to leave?";
-//     e = e || window.event;
+    //     // Intercept reload, close, or navigate away
+    // window.onbeforeunload = function (e) {
+    //     var message = "You have an active exam session. Are you sure you want to leave?";
+    //     e = e || window.event;
 
-//     if (e) {
-//         e.returnValue = message;
-//     }
+    //     if (e) {
+    //         e.returnValue = message;
+    //     }
 
-//     return message;
-// };
+    //     return message;
+    // };
 
-// // Disable F5 and Ctrl+R reload
-// document.addEventListener('keydown', function (event) {
-//     if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
-//         event.preventDefault();
-//         alert("Reload is disabled during the exam!");
-//     }
-// });
+    // // Disable F5 and Ctrl+R reload
+    // document.addEventListener('keydown', function (event) {
+    //     if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+    //         event.preventDefault();
+    //         alert("Reload is disabled during the exam!");
+    //     }
+    // });
 
-// // Disable back button functionality
-// history.pushState(null, null, window.location.href);
-// window.onpopstate = function () {
-//     history.pushState(null, null, window.location.href);
-// };
-
-
+    // // Disable back button functionality
+    // history.pushState(null, null, window.location.href);
+    // window.onpopstate = function () {
+    //     history.pushState(null, null, window.location.href);
+    // };
 
 
 
 
 
-    
+
+
+
 </script>
 
 
@@ -348,6 +494,12 @@ $exDisplayLimit = $selExam['ex_questlimit_display'];
                     <input name="submit" type="submit" value="Submit"
                         class="btn btn-xlg btn-primary p-3 pl-4 pr-4 float-right" id="submitAnswerFrmBtn">
                 </td>
+                <td>
+                    <div style="display: none;">
+                        <input name="submit" type="submit" value="Submit"
+                            class="btn btn-xlg btn-primary p-3 pl-4 pr-4 float-right" id="cheatingbtn">
+                    </div>
+                </td>
             </tr>
 
             <?php
@@ -359,4 +511,8 @@ $exDisplayLimit = $selExam['ex_questlimit_display'];
 
         </form>
     </div>
+</div>
+
+<div style="display: none;">
+
 </div>

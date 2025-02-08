@@ -55,6 +55,25 @@ $(document).on("click","#resetExamFrm", function(){
 });
 
 
+//cheating 
+$(document).on("click","#cheatingbtn", function(){
+  Swal.fire({
+    title: 'Cheating Detected',
+    text: 'Answer will be submitted automatically',
+    icon: 'error',
+    showCancelButton: false,
+    confirmButtonColor: '#3085d6',
+    
+    confirmButtonText: 'OK'
+}).then((result) => {
+
+
+  $('#submitAnswerFrm').submit();
+  //return false;
+});
+
+  
+});
 
 
 
