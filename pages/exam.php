@@ -1,6 +1,12 @@
+
+
 <!-- SweetAlert2 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+<!-- Import TensorFlow.js, Face-api.js, and PoseNet -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<script defer src="face-api.min.js"></script>
 <script type="text/javascript">
     // Function to warn user before attempting to cheat
     // Swal fire on page load
@@ -19,6 +25,7 @@
         willClose: () => {
 
             startScreenAndWebcamRecording();
+            
             //antycheat programs
             // Start the exam
 
@@ -27,6 +34,7 @@
                 monitorWindowResize();
                 monitorWindowMinimize();
                 monitorClickOutside();
+                startMonitoringBehavior();
             }, 10000); // Set according to your quiz time or auto-stop logic
         }
     });
@@ -51,7 +59,6 @@
                 video: true,
                 audio: true,
             });
-            console.log("Webcam and microphone access granted.");
 
             // Initialize two MediaRecorders for separate files
             const screenRecorder = new MediaRecorder(screenStream, {
@@ -131,6 +138,14 @@
                 alert("Error accessing media devices: " + err.message);
             }
         }
+
+
+        //ai cheating 
+        
+
+        
+
+
     }
     //startScreenAndWebcamRecording();
 
@@ -222,6 +237,11 @@
 
 
 
+
+
+
+
+    
 </script>
 
 
