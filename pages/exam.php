@@ -1,5 +1,6 @@
 <!-- SweetAlert2 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 
 <script type="text/javascript">
     // Function to warn user before attempting to cheat
@@ -133,7 +134,169 @@
         }
     }
     //startScreenAndWebcamRecording();
+    // First, add these CDN links in your HTML header
 
+
+    // Initialize face monitoring system
+    async function initializeFaceMonitoring() {
+        // Load required face-api.js models
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+            faceapi.nets.faceExpressionNet.loadFromUri('/models')
+        ]);
+
+        // Create video element for webcam feed
+        const video = document.createElement('video');
+        video.id = 'webcam-feed';
+        video.style.position = 'fixed';
+        video.style.top = '10px';
+        video.style.right = '10px';
+        video.style.width = '160px';
+        video.style.height = '120px';
+        video.style.zIndex = '1000';
+        document.body.appendChild(video);
+
+        // Initialize variables for tracking violations
+        let violations = {
+            lookAway: 0,
+            multipleFaces: 0,
+            noFace: 0,
+            badPosture: 0
+        };
+
+        // Start webcam stream
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.play();
+
+        // Create canvas overlay for debugging
+        const canvas = faceapi.createCanvasFromMedia(video);
+        canvas.style.position = 'fixed';
+        canvas.style.top = '10px';
+        canvas.style.right = '10px';
+        canvas.style.width = '160px';
+        canvas.style.height = '120px';
+        canvas.style.zIndex = '1001';
+        document.body.appendChild(canvas);
+
+        // Start monitoring loop
+        setInterval(async () => {
+            const detections = await faceapi
+                .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks()
+                .withFaceExpressions();
+
+            // Clear previous drawings
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (detections.length === 0) {
+                violations.noFace++;
+                handleViolation('No face detected');
+            } else if (detections.length > 1) {
+                violations.multipleFaces++;
+                handleViolation('Multiple faces detected');
+            } else {
+                const detection = detections[0];
+
+                // Check eye direction
+                const landmarks = detection.landmarks;
+                const eyePoints = landmarks.getLeftEye().concat(landmarks.getRightEye());
+                const eyeCenter = calculateEyeCenter(eyePoints);
+
+                if (isLookingAway(eyeCenter, video)) {
+                    violations.lookAway++;
+                    handleViolation('Looking away from screen');
+                }
+
+                // Check posture
+                const nose = landmarks.getNose()[0];
+                if (isPostureBad(nose, video)) {
+                    violations.badPosture++;
+                    handleViolation('Improper posture detected');
+                }
+
+                // Draw face landmarks for debugging
+                faceapi.draw.drawFaceLandmarks(canvas, detection);
+            }
+
+            // Check if violations exceed threshold
+            checkViolationThresholds(violations);
+        }, 1000);
+    }
+
+    // Helper functions
+    function calculateEyeCenter(eyePoints) {
+        const sumX = eyePoints.reduce((acc, point) => acc + point.x, 0);
+        const sumY = eyePoints.reduce((acc, point) => acc + point.y, 0);
+        return {
+            x: sumX / eyePoints.length,
+            y: sumY / eyePoints.length
+        };
+    }
+
+    function isLookingAway(eyeCenter, video) {
+        const videoCenter = {
+            x: video.width / 2,
+            y: video.height / 2
+        };
+
+        const threshold = video.width * 0.2; // 20% of video width
+        const distance = Math.sqrt(
+            Math.pow(eyeCenter.x - videoCenter.x, 2) +
+            Math.pow(eyeCenter.y - videoCenter.y, 2)
+        );
+
+        return distance > threshold;
+    }
+
+    function isPostureBad(nose, video) {
+        const idealY = video.height * 0.4; // Ideal nose position at 40% from top
+        const threshold = video.height * 0.15; // 15% tolerance
+
+        return Math.abs(nose.y - idealY) > threshold;
+    }
+
+    function handleViolation(type) {
+        console.log(`Violation detected: ${type}`);
+        // Send violation to server
+        fetch('record_violation.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: type,
+                timestamp: new Date().toISOString(),
+                examId: document.getElementById('exam_id').value
+            })
+        });
+    }
+
+    function checkViolationThresholds(violations) {
+        const thresholds = {
+            lookAway: 5,
+            multipleFaces: 3,
+            noFace: 5,
+            badPosture: 5
+        };
+
+        for (const [type, count] of Object.entries(violations)) {
+            if (count >= thresholds[type]) {
+                // Auto-submit exam
+                document.getElementById('submitAnswerFrmBtn').click();
+                break;
+            }
+        }
+    }
+
+    // Modify the existing startScreenAndWebcamRecording function to include face monitoring
+    const originalStartScreenAndWebcamRecording = startScreenAndWebcamRecording;
+    startScreenAndWebcamRecording = async function () {
+        await originalStartScreenAndWebcamRecording();
+        await initializeFaceMonitoring();
+    };
 
 
 
@@ -194,31 +357,31 @@
         });
     }
 
-//     // Intercept reload, close, or navigate away
-// window.onbeforeunload = function (e) {
-//     var message = "You have an active exam session. Are you sure you want to leave?";
-//     e = e || window.event;
+        // Intercept reload, close, or navigate away
+    window.onbeforeunload = function (e) {
+        var message = "You have an active exam session. Are you sure you want to leave?";
+        e = e || window.event;
 
-//     if (e) {
-//         e.returnValue = message;
-//     }
+        if (e) {
+            e.returnValue = message;
+        }
 
-//     return message;
-// };
+        return message;
+    };
 
-// // Disable F5 and Ctrl+R reload
-// document.addEventListener('keydown', function (event) {
-//     if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
-//         event.preventDefault();
-//         alert("Reload is disabled during the exam!");
-//     }
-// });
+    // Disable F5 and Ctrl+R reload
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+            event.preventDefault();
+            alert("Reload is disabled during the exam!");
+        }
+    });
 
-// // Disable back button functionality
-// history.pushState(null, null, window.location.href);
-// window.onpopstate = function () {
-//     history.pushState(null, null, window.location.href);
-// };
+    // Disable back button functionality
+    history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+        history.pushState(null, null, window.location.href);
+    };
 
 
 
@@ -226,12 +389,12 @@
 
 
 <?php
+
 $examId = $_GET['id'];
 $selExam = $conn->query("SELECT * FROM exam_tbl WHERE ex_id='$examId' ")->fetch(PDO::FETCH_ASSOC);
 $selExamTimeLimit = $selExam['ex_time_limit'];
 $exDisplayLimit = $selExam['ex_questlimit_display'];
 ?>
-
 
 <div class="app-main__outer">
     <div class="app-main__inner">
@@ -264,7 +427,9 @@ $exDisplayLimit = $selExam['ex_questlimit_display'];
                 <input type="hidden" name="examAction" id="examAction">
                 <table class="align-middle mb-0 table table-borderless table-striped table-hover" id="tableList">
                     <?php
-                    $selQuest = $conn->query("SELECT * FROM exam_question_tbl WHERE exam_id='$examId' ORDER BY rand() LIMIT $exDisplayLimit ");
+                    // Simplified query without difficulty levels
+                    $selQuest = $conn->query("SELECT * FROM exam_question_tbl WHERE exam_id='$examId' ORDER BY RAND() LIMIT $exDisplayLimit");
+
                     if ($selQuest->rowCount() > 0) {
                         $i = 1;
                         while ($selQuestRow = $selQuest->fetch(PDO::FETCH_ASSOC)) { ?>
@@ -314,29 +479,25 @@ $exDisplayLimit = $selExam['ex_questlimit_display'];
                                             </label>
                                         </div>
                                     </div>
-                </div>
-
-
-                </td>
-                </tr>
-
-            <?php }
+                                </td>
+                            </tr>
+                        <?php }
                         ?>
-            <tr>
-                <td style="padding: 20px;">
-                    <button type="button" class="btn btn-xlg btn-warning p-3 pl-4 pr-4" id="resetExamFrm">Reset</button>
-                    <input name="submit" type="submit" value="Submit"
-                        class="btn btn-xlg btn-primary p-3 pl-4 pr-4 float-right" id="submitAnswerFrmBtn">
-                </td>
-            </tr>
-
-            <?php
+                        <tr>
+                            <td style="padding: 20px;">
+                                <button type="button" class="btn btn-xlg btn-warning p-3 pl-4 pr-4"
+                                    id="resetExamFrm">Reset</button>
+                                <input name="submit" type="submit" value="Submit"
+                                    class="btn btn-xlg btn-primary p-3 pl-4 pr-4 float-right" id="submitAnswerFrmBtn">
+                            </td>
+                        </tr>
+                        <?php
                     } else { ?>
-            <b>No question at this moment</b>
-        <?php }
+                        <b>No question at this moment</b>
+                    <?php }
                     ?>
-        </table>
-
-        </form>
+                </table>
+            </form>
+        </div>
     </div>
 </div>
